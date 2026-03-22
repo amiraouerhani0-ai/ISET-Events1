@@ -1,0 +1,76 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="logo-section">
+      <h1 class="app-title">ISET-Events</h1>
+      <p class="app-subtitle">Gérez vos événements facilement</p>
+    </div>
+
+    <div class="welcome-section">
+      <h2 class="welcome-title">BON RETOUR</h2>
+      <p class="welcome-message">CONNECTEZ-VOUS À VOTRE COMPTE POUR CONTINUER !</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" autocomplete="off">
+      <div class="form-group">
+        <label for="email" class="form-label">Email :</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          placeholder=""
+          autocomplete="off"
+          [class.is-invalid]="email?.invalid && email?.touched"
+        />
+        <div *ngIf="email?.invalid && email?.touched" class="invalid-feedback">
+          <span *ngIf="email?.errors?.['required']">L'email est requis.</span>
+          <span *ngIf="email?.errors?.['email']">Veuillez saisir une adresse email valide.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Mot de passe :</label>
+        <div class="password-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="form-control"
+            placeholder=""
+            autocomplete="off"
+            [class.is-invalid]="password?.invalid && password?.touched"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            aria-label="Afficher/masquer le mot de passe"
+          >
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div *ngIf="password?.invalid && password?.touched" class="invalid-feedback">
+          <span *ngIf="password?.errors?.['required']">Le mot de passe est requis.</span>
+          <span *ngIf="password?.errors?.['minlength']">Le mot de passe doit contenir au moins 6 caractères.</span>
+        </div>
+      </div>
+
+      <div class="forgot-password">
+        <a routerLink="/forgot-password" class="forgot-link">Mot de passe oublié ??</a>
+      </div>
+
+      <button type="submit" class="btn-signin" [disabled]="loginForm.invalid || isLoading">
+        <span *ngIf="isLoading" class="spinner"></span>
+        <span *ngIf="!isLoading">Se connecter</span>
+      </button>
+
+      <div class="register-link">
+        Vous n'avez pas de compte ? <a routerLink="/register">S'inscrire</a>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+</div>

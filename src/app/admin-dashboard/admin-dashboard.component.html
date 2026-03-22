@@ -1,0 +1,287 @@
+<div class="admin-container">
+  <nav class="admin-navbar">
+    <div class="navbar-brand">
+      <h2>ISET-Events Admin</h2>
+    </div>
+    <div class="navbar-menu">
+      <span class="admin-info">Admin: {{ currentUser?.name }}</span>
+      <button class="btn-logout" (click)="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <!-- Statistiques Globales -->
+    <div class="stats-section">
+      <h2>Tableau de bord Administrateur</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-number">{{ totalUsers }}</div>
+          <div class="stat-label">Utilisateurs</div>
+          <div class="stat-detail">
+            <span>Organisateurs: {{ organisateursCount }}</span>
+            <span>Participants: {{ participantsCount }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-number">{{ totalEvents }}</div>
+          <div class="stat-label">Événements</div>
+          <div class="stat-detail">
+            <span>À venir: {{ upcomingEventsCount }}</span>
+            <span>Terminés: {{ completedEventsCount }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-number">{{ totalRegistrations }}</div>
+          <div class="stat-label">Inscriptions</div>
+          <div class="stat-detail">
+            <span>Taux: {{ registrationRate }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="tabs">
+      <button 
+        [class.active]="activeTab === 'users'" 
+        (click)="activeTab = 'users'">
+        👥 Utilisateurs
+      </button>
+      <button 
+        [class.active]="activeTab === 'events'" 
+        (click)="activeTab = 'events'">
+        📅 Événements
+      </button>
+      <button 
+        [class.active]="activeTab === 'stats'" 
+        (click)="activeTab = 'stats'">
+        📊 Statistiques
+      </button>
+    </div>
+
+    <!-- Onglet Utilisateurs -->
+    <div *ngIf="activeTab === 'users'" class="users-section">
+      <div class="section-header">
+        <h3>Gestion des Utilisateurs</h3>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="🔍 Rechercher un utilisateur..."
+          [(ngModel)]="searchUser">
+      </div>
+      
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Rôle</th>
+              <th>Date d'inscription</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers">
+              <td>{{ user.id }}</td>
+              <td><strong>{{ user.name }}</strong></td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.phone }}</td>
+              <td>
+                <span [ngClass]="{'role-badge-organisateur': user.role === 'organisateur', 'role-badge-participant': user.role === 'participant'}">
+                  {{ user.role === 'organisateur' ? 'Organisateur' : 'Participant' }}
+                </span>
+              </td>
+              <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td class="actions">
+                <button class="btn-edit" (click)="editUser(user)">✏️</button>
+                <button class="btn-delete" (click)="deleteUser(user.id)">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Onglet Événements -->
+    <div *ngIf="activeTab === 'events'" class="events-section">
+      <div class="section-header">
+        <h3>Gestion des Événements</h3>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="🔍 Rechercher un événement..."
+          [(ngModel)]="searchEvent">
+      </div>
+      
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Titre</th>
+              <th>Organisateur</th>
+              <th>Date</th>
+              <th>Lieu</th>
+              <th>Participants</th>
+              <th>Capacité</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let event of filteredEvents">
+              <td>{{ event.id }}</td>
+              <td><strong>{{ event.title }}</strong></td>
+              <td>{{ event.organisateurName }}</td>
+              <td>{{ event.date }}</td>
+              <td>{{ event.location }}</td>
+              <td>{{ event.attendees }}</td>
+              <td>{{ event.capacity }}</td>
+              <td>
+                <span [ngClass]="{'status-upcoming': event.status === 'upcoming', 'status-ongoing': event.status === 'ongoing', 'status-completed': event.status === 'completed'}">
+                  {{ event.status === 'upcoming' ? 'À venir' : event.status === 'ongoing' ? 'En cours' : 'Terminé' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="btn-view" (click)="viewEventDetails(event)">👁️</button>
+                <button class="btn-delete" (click)="deleteEvent(event.id)">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Onglet Statistiques -->
+    <div *ngIf="activeTab === 'stats'" class="stats-section-detail">
+      <div class="stats-grid-detail">
+        <div class="stat-card-large">
+          <h4>Évolution des inscriptions</h4>
+          <div class="chart-placeholder">
+            <div class="bar-chart">
+              <div *ngFor="let stat of monthlyStats" class="bar-item">
+                <div class="bar" [style.height.%]="stat.percentage"></div>
+                <div class="bar-label">{{ stat.month }}</div>
+                <div class="bar-value">{{ stat.count }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card-large">
+          <h4>Répartition par rôle</h4>
+          <div class="pie-chart">
+            <div class="pie-item">
+              <div class="pie-color organiser-color"></div>
+              <span>Organisateurs: {{ organisateursCount }} ({{ organisateurPercentage }}%)</span>
+            </div>
+            <div class="pie-item">
+              <div class="pie-color participant-color"></div>
+              <span>Participants: {{ participantsCount }} ({{ participantPercentage }}%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card-large">
+          <h4>Top 5 événements populaires</h4>
+          <div class="top-events">
+            <div *ngFor="let event of topEvents; let i = index" class="top-event-item">
+              <span class="rank">{{ i + 1 }}</span>
+              <span class="event-name">{{ event.title }}</span>
+              <span class="event-count">{{ event.attendees }} inscrits</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card-large">
+          <h4>Activité récente</h4>
+          <div class="recent-activity">
+            <div *ngFor="let activity of recentActivities" class="activity-item">
+              <span class="activity-icon">{{ activity.icon }}</span>
+              <span class="activity-text">{{ activity.text }}</span>
+              <span class="activity-time">{{ activity.time }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Modifier Utilisateur -->
+<div *ngIf="showEditUserModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Modifier l'utilisateur</h3>
+      <button class="modal-close" (click)="showEditUserModal = false">&times;</button>
+    </div>
+    <form [formGroup]="editUserForm" (ngSubmit)="updateUser()">
+      <div class="form-group">
+        <label>Nom complet</label>
+        <input type="text" formControlName="name" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="tel" formControlName="phone" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Rôle</label>
+        <select formControlName="role" class="form-control">
+          <option value="organisateur">Organisateur</option>
+          <option value="participant">Participant</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="showEditUserModal = false">Annuler</button>
+        <button type="submit" class="btn-save">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Détails Événement -->
+<div *ngIf="showEventDetailsModal" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h3>Détails de l'événement</h3>
+      <button class="modal-close" (click)="showEventDetailsModal = false">&times;</button>
+    </div>
+    <div *ngIf="selectedEvent" class="event-details-content">
+      <div class="detail-row">
+        <strong>Titre:</strong> {{ selectedEvent.title }}
+      </div>
+      <div class="detail-row">
+        <strong>Description:</strong> {{ selectedEvent.description }}
+      </div>
+      <div class="detail-row">
+        <strong>Organisateur:</strong> {{ selectedEvent.organisateurName }}
+      </div>
+      <div class="detail-row">
+        <strong>Date:</strong> {{ selectedEvent.date }}
+      </div>
+      <div class="detail-row">
+        <strong>Lieu:</strong> {{ selectedEvent.location }}
+      </div>
+      <div class="detail-row">
+        <strong>Participants:</strong> {{ selectedEvent.attendees }} / {{ selectedEvent.capacity }}
+      </div>
+      <div class="detail-row">
+        <strong>Liste des participants:</strong>
+        <ul>
+          <li *ngFor="let attendee of eventAttendees">{{ attendee.userName }}</li>
+          <li *ngIf="eventAttendees.length === 0">Aucun participant pour le moment</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

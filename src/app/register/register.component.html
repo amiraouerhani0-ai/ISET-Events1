@@ -1,0 +1,146 @@
+<!-- register.component.html -->
+<div class="register-container">
+  <div class="register-card">
+    <div class="logo-section">
+      <h1 class="app-title">ISET-Events</h1>
+      <p class="app-subtitle">Créez votre compte</p>
+    </div>
+
+    <div class="welcome-section">
+      <h2 class="welcome-title">INSCRIPTION</h2>
+      <p class="welcome-message">CRÉEZ VOTRE COMPTE POUR COMMENCER !</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <div class="form-group">
+        <label for="name" class="form-label">Nom complet :</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          class="form-control"
+          placeholder="Entrez votre nom complet"
+          [class.is-invalid]="name?.invalid && name?.touched"
+        />
+        <div *ngIf="name?.invalid && name?.touched" class="invalid-feedback">
+          <span *ngIf="name?.errors?.['required']">Le nom est requis.</span>
+          <span *ngIf="name?.errors?.['minlength']">Le nom doit contenir au moins 3 caractères.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email :</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          placeholder="nom@exemple.com"
+          [class.is-invalid]="email?.invalid && email?.touched"
+        />
+        <div *ngIf="email?.invalid && email?.touched" class="invalid-feedback">
+          <span *ngIf="email?.errors?.['required']">L'email est requis.</span>
+          <span *ngIf="email?.errors?.['email']">Veuillez saisir une adresse email valide.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone" class="form-label">Numéro de téléphone :</label>
+        <input
+          type="tel"
+          id="phone"
+          formControlName="phone"
+          class="form-control"
+          placeholder="Entrez votre numéro de téléphone"
+          [class.is-invalid]="phone?.invalid && phone?.touched"
+        />
+        <div *ngIf="phone?.invalid && phone?.touched" class="invalid-feedback">
+          <span *ngIf="phone?.errors?.['required']">Le numéro de téléphone est requis.</span>
+          <span *ngIf="phone?.errors?.['pattern']">Veuillez saisir un numéro valide (au moins 8 chiffres).</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Mot de passe :</label>
+        <div class="password-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="form-control"
+            placeholder="Entrez votre mot de passe"
+            [class.is-invalid]="password?.invalid && password?.touched"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            aria-label="Afficher/masquer le mot de passe"
+          >
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div *ngIf="password?.invalid && password?.touched" class="invalid-feedback">
+          <span *ngIf="password?.errors?.['required']">Le mot de passe est requis.</span>
+          <span *ngIf="password?.errors?.['minlength']">Le mot de passe doit contenir au moins 6 caractères.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="form-label">Confirmer le mot de passe :</label>
+        <div class="password-wrapper">
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            class="form-control"
+            placeholder="Confirmez votre mot de passe"
+            [class.is-invalid]="confirmPassword?.invalid && confirmPassword?.touched"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="toggleConfirmPasswordVisibility()"
+            aria-label="Afficher/masquer le mot de passe"
+          >
+            {{ showConfirmPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div *ngIf="confirmPassword?.invalid && confirmPassword?.touched" class="invalid-feedback">
+          <span *ngIf="confirmPassword?.errors?.['required']">Veuillez confirmer votre mot de passe.</span>
+          <span *ngIf="registerForm.errors?.['mismatch'] && confirmPassword?.touched">Les mots de passe ne correspondent pas.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="role" class="form-label">Rôle :</label>
+        <select
+          id="role"
+          formControlName="role"
+          class="form-control"
+          [class.is-invalid]="role?.invalid && role?.touched"
+        >
+          <option value="" disabled selected>Sélectionnez votre rôle</option>
+          <option value="organisateur">Organisateur</option>
+          <option value="participant">Participant</option>
+        </select>
+        <div *ngIf="role?.invalid && role?.touched" class="invalid-feedback">
+          <span *ngIf="role?.errors?.['required']">Veuillez sélectionner un rôle.</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-register" [disabled]="registerForm.invalid || isLoading">
+        <span *ngIf="isLoading" class="spinner"></span>
+        <span *ngIf="!isLoading">S'inscrire</span>
+      </button>
+
+      <div class="login-link">
+        Vous avez déjà un compte ? <a routerLink="/login">Se connecter</a>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+</div>
