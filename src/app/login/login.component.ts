@@ -1,3 +1,4 @@
+// login.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -20,8 +21,8 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],  // Champ vide
-      password: ['', [Validators.required, Validators.minLength(6)]]  // Champ vide
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
@@ -53,7 +54,13 @@ export class LoginComponent implements OnInit {
       
       if (userExists) {
         localStorage.setItem('currentUser', JSON.stringify(userExists));
-        this.router.navigate(['/dashboard']);
+        
+        // Redirection selon le rôle
+        if (userExists.role === 'admin') {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       } else {
         const emailExists = users.find((user: any) => user.email === email);
         if (emailExists) {

@@ -1,3 +1,4 @@
+// dashboard/dashboard.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,6 +20,7 @@ export class DashboardComponent implements OnInit {
   showCreateEventModal = false;
   eventForm!: FormGroup;
   today: string;
+  activeTab: string = 'available';
 
   constructor(
     private router: Router,
@@ -27,43 +29,53 @@ export class DashboardComponent implements OnInit {
     this.today = new Date().toISOString().split('T')[0];
   }
 
- ngOnInit(): void {
-  this.currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-  
-  if (!this.currentUser || !this.currentUser.id) {
-    this.router.navigate(['/login']);
-    return;
-  }
-
-  this.eventForm = this.fb.group({
-    title: ['', Validators.required],
-    description: ['', Validators.required],
-    date: ['', Validators.required],
-    location: ['', Validators.required],
-    capacity: ['', [Validators.required, Validators.min(1)]]
-  });
-
-  this.loadEvents();
-  this.calculateStats();
-}
-
-  loadEvents(): void {
-    const allEvents = JSON.parse(localStorage.getItem('events') || '[]');
+  ngOnInit(): void {
+    this.currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     
-    if (this.currentUser.role === 'organisateur') {
-      this.events = allEvents.filter((event: any) => event.organisateurId === this.currentUser.id);
-      this.calculateOrganisateurStats();
-    } else {
-      this.availableEvents = allEvents;
-      const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
-      const myEventIds = registrations
-        .filter((reg: any) => reg.userId === this.currentUser.id)
-        .map((reg: any) => reg.eventId);
-      this.myEvents = allEvents.filter((event: any) => myEventIds.includes(event.id));
-      this.registeredEvents = this.myEvents.length;
-      this.upcomingEventsParticipant = this.myEvents.filter((event: any) => event.status === 'upcoming').length;
+    if (!this.currentUser || !this.currentUser.id) {
+      this.router.navigate(['/login']);
+      return;
     }
+    
+    if (this.currentUser.role === 'admin') {
+      this.router.navigate(['/admin']);
+      return;
+    }
+
+    this.eventForm = this.fb.group({
+      title: ['', Validators.required],
+      description: ['', Validators.required],
+      date: ['', Validators.required],
+      location: ['', Validators.required],
+      capacity: ['', [Validators.required, Validators.min(1)]]
+    });
+
+    this.loadEvents();
+    this.calculateStats();
   }
+
+  // dashboard.component.ts - Modifiez la méthode loadEvents
+loadEvents(): void {
+  const allEvents = JSON.parse(localStorage.getItem('events') || '[]');
+  
+  if (this.currentUser.role === 'organisateur') {
+    // L'organisateur voit tous ses événements
+    this.events = allEvents.filter((event: any) => event.organisateurId === this.currentUser.id);
+    this.calculateOrganisateurStats();
+  } else {
+    // Le participant voit seulement les événements approuvés
+    const approvedEvents = allEvents.filter((event: any) => event.approvalStatus === 'approved');
+    this.availableEvents = approvedEvents;
+    
+    const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+    const myEventIds = registrations
+      .filter((reg: any) => reg.userId === this.currentUser.id)
+      .map((reg: any) => reg.eventId);
+    this.myEvents = approvedEvents.filter((event: any) => myEventIds.includes(event.id));
+    this.registeredEvents = this.myEvents.length;
+    this.upcomingEventsParticipant = this.myEvents.filter((event: any) => event.status === 'upcoming').length;
+  }
+}
 
   calculateOrganisateurStats(): void {
     this.upcomingEvents = this.events.filter((event: any) => event.status === 'upcoming').length;
@@ -86,7 +98,9 @@ export class DashboardComponent implements OnInit {
       organisateurName: this.currentUser.name,
       attendees: 0,
       status: 'upcoming',
-      createdAt: new Date()
+      approvalStatus: 'pending',
+      createdAt: new Date(),
+      rejectionReason: null
     };
 
     const allEvents = JSON.parse(localStorage.getItem('events') || '[]');
@@ -97,6 +111,8 @@ export class DashboardComponent implements OnInit {
     this.eventForm.reset();
     this.loadEvents();
     this.calculateStats();
+
+    alert('✅ Votre demande a été envoyée à l\'administrateur pour approbation!');
   }
 
   editEvent(event: any): void {
@@ -196,5 +212,4 @@ export class DashboardComponent implements OnInit {
     localStorage.removeItem('currentUser');
     this.router.navigate(['/login']);
   }
-  
 }

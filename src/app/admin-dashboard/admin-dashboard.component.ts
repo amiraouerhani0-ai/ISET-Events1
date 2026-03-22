@@ -38,7 +38,7 @@ export class AdminDashboardComponent implements OnInit {
   editUserForm!: FormGroup;
   selectedUser: any = null;
   
-  // Statistiques avancées
+  // Statistiques
   monthlyStats: any[] = [];
   topEvents: any[] = [];
   recentActivities: any[] = [];
@@ -53,7 +53,9 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     
-    if (!this.currentUser || this.currentUser.role !== 'organisateur') {
+    // Vérifier si l'utilisateur est admin
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      alert('Accès non autorisé!');
       this.router.navigate(['/login']);
       return;
     }
