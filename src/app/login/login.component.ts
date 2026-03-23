@@ -13,6 +13,7 @@ export class LoginComponent implements OnInit {
   showPassword = false;
   isLoading = false;
   errorMessage = '';
+  showAdminHint = false;
 
   constructor(
     private fb: FormBuilder,
@@ -49,6 +50,32 @@ export class LoginComponent implements OnInit {
     setTimeout(() => {
       this.isLoading = false;
       
+      // Vérifier les identifiants admin par défaut
+      if (email === 'admin@iset.tn' && password === 'admin123') {
+        const adminUser = {
+          id: 0,
+          name: 'Administrateur',
+          email: 'admin@iset.tn',
+          phone: '00000000',
+          role: 'admin',
+          createdAt: new Date()
+        };
+        
+        // Vérifier si l'admin existe déjà dans localStorage
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const adminExists = users.find((user: any) => user.email === 'admin@iset.tn');
+        
+        if (!adminExists) {
+          // Ajouter l'admin au localStorage s'il n'existe pas
+          users.push(adminUser);
+          localStorage.setItem('users', JSON.stringify(users));
+        }
+        
+        localStorage.setItem('currentUser', JSON.stringify(adminUser));
+        this.router.navigate(['/admin']);
+        return;
+      }
+      
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const userExists = users.find((user: any) => user.email === email && user.password === password);
       
@@ -70,5 +97,9 @@ export class LoginComponent implements OnInit {
         }
       }
     }, 1500);
+  }
+
+  toggleAdminHint(): void {
+    this.showAdminHint = !this.showAdminHint;
   }
 }

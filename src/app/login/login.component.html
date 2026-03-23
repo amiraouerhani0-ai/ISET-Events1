@@ -68,6 +68,18 @@
         Vous n'avez pas de compte ? <a routerLink="/register">S'inscrire</a>
       </div>
 
+      <!-- Admin credentials hint - Hidden by default -->
+      <div class="admin-hint" [class.visible]="showAdminHint">
+        <div class="admin-secret-trigger" (click)="toggleAdminHint()" title="Admin Access">
+          🔐
+        </div>
+        <div class="admin-credentials" *ngIf="showAdminHint">
+          <h4>Accès Administrateur</h4>
+          <p><strong>Email:</strong> admin@iset.tn</p>
+          <p><strong>Mot de passe:</strong> admin123</p>
+        </div>
+      </div>
+
       <div *ngIf="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>

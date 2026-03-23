@@ -13,6 +13,7 @@ export class DashboardComponent implements OnInit {
   events: any[] = [];
   availableEvents: any[] = [];
   myEvents: any[] = [];
+  favoriteEvents: any[] = [];
   registeredEvents = 0;
   upcomingEvents = 0;
   upcomingEventsParticipant = 0;
@@ -74,6 +75,9 @@ loadEvents(): void {
     this.myEvents = approvedEvents.filter((event: any) => myEventIds.includes(event.id));
     this.registeredEvents = this.myEvents.length;
     this.upcomingEventsParticipant = this.myEvents.filter((event: any) => event.status === 'upcoming').length;
+    
+    // Load favorites for participants
+    this.loadFavorites();
   }
 }
 
@@ -205,6 +209,48 @@ loadEvents(): void {
     const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
     return registrations.some(
       (reg: any) => reg.userId === this.currentUser.id && reg.eventId === eventId
+    );
+  }
+
+  // Favorites management
+  loadFavorites(): void {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const userFavorites = favorites.filter((fav: any) => fav.userId === this.currentUser.id);
+    const favoriteEventIds = userFavorites.map((fav: any) => fav.eventId);
+    this.favoriteEvents = this.availableEvents.filter((event: any) => favoriteEventIds.includes(event.id));
+  }
+
+  toggleFavorite(event: any): void {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const existingFavorite = favorites.find(
+      (fav: any) => fav.userId === this.currentUser.id && fav.eventId === event.id
+    );
+
+    if (existingFavorite) {
+      // Remove from favorites
+      const updatedFavorites = favorites.filter(
+        (fav: any) => !(fav.userId === this.currentUser.id && fav.eventId === event.id)
+      );
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      alert('❌ Événement retiré des favoris');
+    } else {
+      // Add to favorites
+      favorites.push({
+        userId: this.currentUser.id,
+        eventId: event.id,
+        addedAt: new Date()
+      });
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      alert('❤️ Événement ajouté aux favoris');
+    }
+
+    this.loadFavorites();
+  }
+
+  isFavorite(eventId: number): boolean {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    return favorites.some(
+      (fav: any) => fav.userId === this.currentUser.id && fav.eventId === eventId
     );
   }
 

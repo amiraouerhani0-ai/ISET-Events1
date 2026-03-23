@@ -33,9 +33,11 @@ export class AdminDashboardComponent implements OnInit {
   // Modals
   showEditUserModal = false;
   showEventDetailsModal = false;
+  showCreateUserModal = false;
   selectedEvent: any = null;
   eventAttendees: any[] = [];
   editUserForm!: FormGroup;
+  createUserForm!: FormGroup;
   selectedUser: any = null;
   
   // Statistiques
@@ -44,6 +46,12 @@ export class AdminDashboardComponent implements OnInit {
   recentActivities: any[] = [];
   organisateurPercentage = 0;
   participantPercentage = 0;
+  
+  // Gestion des événements en attente
+  pendingEvents: any[] = [];
+  showApprovalModal = false;
+  rejectionReason = '';
+  selectedEventForApproval: any = null;
 
   constructor(
     private router: Router,
@@ -67,6 +75,14 @@ export class AdminDashboardComponent implements OnInit {
       role: ['', Validators.required]
     });
 
+    this.createUserForm = this.fb.group({
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      phone: ['', Validators.required],
+      role: ['', Validators.required]
+    });
+
     this.loadData();
     this.calculateStats();
     this.generateMonthlyStats();
@@ -77,6 +93,9 @@ export class AdminDashboardComponent implements OnInit {
     this.users = JSON.parse(localStorage.getItem('users') || '[]');
     this.events = JSON.parse(localStorage.getItem('events') || '[]');
     this.registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+    
+    // Filtrer les événements en attente
+    this.pendingEvents = this.events.filter(e => e.approvalStatus === 'pending');
     
     this.totalUsers = this.users.length;
     this.totalEvents = this.events.length;
@@ -264,6 +283,93 @@ export class AdminDashboardComponent implements OnInit {
     this.selectedEvent = event;
     this.eventAttendees = this.registrations.filter(r => r.eventId === event.id);
     this.showEventDetailsModal = true;
+  }
+
+  // Méthodes pour la gestion des approbations
+  openApprovalModal(event: any): void {
+    this.selectedEventForApproval = event;
+    this.showApprovalModal = true;
+    this.rejectionReason = '';
+  }
+
+  approveEvent(): void {
+    if (!this.selectedEventForApproval) return;
+    
+    const allEvents = JSON.parse(localStorage.getItem('events') || '[]');
+    const eventIndex = allEvents.findIndex((e: any) => e.id === this.selectedEventForApproval.id);
+    
+    if (eventIndex !== -1) {
+      allEvents[eventIndex].approvalStatus = 'approved';
+      allEvents[eventIndex].approvedAt = new Date();
+      localStorage.setItem('events', JSON.stringify(allEvents));
+      
+      this.loadData();
+      this.showApprovalModal = false;
+      this.selectedEventForApproval = null;
+      
+      alert('✅ Événement approuvé avec succès!');
+    }
+  }
+
+  rejectEvent(): void {
+    if (!this.selectedEventForApproval || !this.rejectionReason.trim()) {
+      alert('❌ Veuillez fournir une raison pour le rejet.');
+      return;
+    }
+    
+    const allEvents = JSON.parse(localStorage.getItem('events') || '[]');
+    const eventIndex = allEvents.findIndex((e: any) => e.id === this.selectedEventForApproval.id);
+    
+    if (eventIndex !== -1) {
+      allEvents[eventIndex].approvalStatus = 'rejected';
+      allEvents[eventIndex].rejectionReason = this.rejectionReason;
+      allEvents[eventIndex].rejectedAt = new Date();
+      localStorage.setItem('events', JSON.stringify(allEvents));
+      
+      this.loadData();
+      this.showApprovalModal = false;
+      this.selectedEventForApproval = null;
+      this.rejectionReason = '';
+      
+      alert('❌ Événement rejeté avec succès!');
+    }
+  }
+
+  closeApprovalModal(): void {
+    this.showApprovalModal = false;
+    this.selectedEventForApproval = null;
+    this.rejectionReason = '';
+  }
+
+  // Créer un utilisateur
+  createUser(): void {
+    if (this.createUserForm.invalid) {
+      alert('❌ Veuillez remplir tous les champs correctement.');
+      return;
+    }
+
+    const newUser = {
+      id: Date.now(),
+      ...this.createUserForm.value,
+      createdAt: new Date()
+    };
+
+    // Vérifier si l'email existe déjà
+    const existingUser = this.users.find(user => user.email === newUser.email);
+    if (existingUser) {
+      alert('❌ Cet email est déjà utilisé par un autre utilisateur.');
+      return;
+    }
+
+    this.users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(this.users));
+
+    this.showCreateUserModal = false;
+    this.createUserForm.reset();
+    this.loadData();
+    this.calculateStats();
+
+    alert(`✅ Utilisateur ${newUser.name} créé avec succès en tant que ${newUser.role === 'organisateur' ? 'Organisateur' : 'Participant'}!`);
   }
 
   logout(): void {

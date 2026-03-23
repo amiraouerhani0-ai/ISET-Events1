@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend Spring Boot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test de Connexion Backend Spring Boot</h1>
+        
+        <div class="info-section">
+            <h2>ℹ️ Information</h2>
+            <p><strong>Backend URL:</strong> <span id="backendUrl">http://localhost:8080/api</span></p>
+            <p><strong>Status:</strong> <span id="status">Non testé</span></p>
+            <p><strong>Dernier test:</strong> <span id="lastTest">-</span></p>
+        </div>
+
+        <div class="test-section">
+            <h2>📡 Tests de Connexion</h2>
+            <button onclick="testConnection()">Tester Connection</button>
+            <button onclick="testAuth()">Tester Auth</button>
+            <button onclick="testRegister()">Tester Inscription</button>
+            <button onclick="testLogin()">Tester Login</button>
+            <button onclick="testDashboard()">Tester Dashboard</button>
+            <div id="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Manuel</h2>
+            <p>Vous pouvez aussi tester manuellement avec ces commandes:</p>
+            <pre>
+# Test de connexion
+curl http://localhost:8080/api/auth/test
+
+# Test d'inscription
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstname": "Test",
+    "lastname": "User", 
+    "email": "test@example.com",
+    "password": "password123",
+    "confirmPassword": "password123",
+    "phone": "12345678",
+    "role": "PARTICIPANT"
+  }'
+
+# Test de login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "password123"
+  }'
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8080/api';
+        let currentToken = null;
+
+        function updateStatus(status, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = status;
+            statusEl.className = `status ${type}`;
+            
+            document.getElementById('lastTest').textContent = new Date().toLocaleString();
+        }
+
+        function addResult(title, message, type) {
+            const resultsEl = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}:</strong>\n${message}`;
+            resultsEl.appendChild(resultDiv);
+            resultsEl.scrollTop = resultsEl.scrollHeight;
+        }
+
+        async function testConnection() {
+            updateStatus('Test de connexion...', 'info');
+            addResult('📡 Connection Test', 'En cours...', 'info');
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/auth/test`);
+                
+                if (response.ok) {
+                    const text = await response.text();
+                    updateStatus('✅ Backend connecté!', 'success');
+                    addResult('✅ Connection Test', `Succès! Réponse: ${text}`, 'success');
+                } else {
+                    updateStatus('❌ Erreur de connexion', 'error');
+                    addResult('❌ Connection Test', `Erreur: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('❌ Backend inaccessible', 'error');
+                addResult('❌ Connection Test', `Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRegister() {
+            updateStatus('Test d\'inscription...', 'info');
+            addResult('🧪 Register Test', 'En cours...', 'info');
+
+            const timestamp = Date.now();
+            const userData = {
+                firstname: 'Test',
+                lastname: 'User',
+                email: `test${timestamp}@example.com`,
+                password: 'password123',
+                confirmPassword: 'password123',
+                phone: '12345678',
+                role: 'PARTICIPANT'
+            };
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    updateStatus('✅ Inscription réussie!', 'success');
+                    addResult('✅ Register Test', `Succès! Réponse: ${result}`, 'success');
+                } else {
+                    updateStatus('❌ Erreur inscription', 'error');
+                    addResult('❌ Register Test', `Erreur: ${response.status} - ${result}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('❌ Erreur inscription', 'error');
+                addResult('❌ Register Test', `Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            updateStatus('Test de login...', 'info');
+            addResult('🔑 Login Test', 'En cours...', 'info');
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'admin123'
+                    })
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    const data = JSON.parse(result);
+                    currentToken = data.token;
+                    updateStatus('✅ Login réussi!', 'success');
+                    addResult('✅ Login Test', `Succès! Token: ${data.token.substring(0, 50)}...`, 'success');
+                } else {
+                    updateStatus('❌ Erreur login', 'error');
+                    addResult('❌ Login Test', `Erreur: ${response.status} - ${result}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('❌ Erreur login', 'error');
+                addResult('❌ Login Test', `Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuth() {
+            updateStatus('Test authentification...', 'info');
+            addResult('🔐 Auth Test', 'En cours...', 'info');
+
+            if (!currentToken) {
+                addResult('❌ Auth Test', 'Veuillez d\'abord vous connecter avec "Tester Login"', 'error');
+                updateStatus('❌ Token manquant', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/events/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    updateStatus('✅ Authentification valide!', 'success');
+                    addResult('✅ Auth Test', `Succès! Réponse: ${result}`, 'success');
+                } else {
+                    updateStatus('❌ Erreur authentification', 'error');
+                    addResult('❌ Auth Test', `Erreur: ${response.status} - ${result}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('❌ Erreur authentification', 'error');
+                addResult('❌ Auth Test', `Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDashboard() {
+            updateStatus('Test dashboard...', 'info');
+            addResult('📊 Dashboard Test', 'En cours...', 'info');
+
+            if (!currentToken) {
+                addResult('❌ Dashboard Test', 'Veuillez d\'abord vous connecter avec "Tester Login"', 'error');
+                updateStatus('❌ Token manquant', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/events/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    updateStatus('✅ Dashboard accessible!', 'success');
+                    addResult('✅ Dashboard Test', `Succès! Réponse: ${result}`, 'success');
+                } else {
+                    updateStatus('❌ Erreur dashboard', 'error');
+                    addResult('❌ Dashboard Test', `Erreur: ${response.status} - ${result}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('❌ Erreur dashboard', 'error');
+                addResult('❌ Dashboard Test', `Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        // Test automatique au chargement
+        window.onload = function() {
+            updateStatus('Prêt à tester', 'info');
+            addResult('🚀 Prêt', 'Page de test chargée. Cliquez sur les boutons pour tester.', 'info');
+        };
+    </script>
+</body>
+</html>

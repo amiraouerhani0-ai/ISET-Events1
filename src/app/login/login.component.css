@@ -247,3 +247,78 @@
 .register-link a:hover {
   text-decoration: underline;
 }
+
+/* Admin hint styles - Hidden by default */
+.admin-hint {
+  margin-top: 1rem;
+  text-align: center;
+  position: relative;
+}
+
+.admin-secret-trigger {
+  position: absolute;
+  bottom: -5px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: transparent;
+  transition: all 0.3s ease;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0;
+}
+
+.admin-secret-trigger:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.admin-hint.visible .admin-secret-trigger {
+  opacity: 1;
+  color: #667eea;
+}
+
+.admin-credentials {
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  text-align: left;
+  animation: slideDown 0.3s ease-out;
+}
+
+.admin-credentials h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.admin-credentials p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.admin-credentials strong {
+  color: #333;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Alternative secret access - Double click on title */
+.login-card:active .admin-secret-trigger {
+  opacity: 0.3;
+  color: #ccc;
+}

@@ -4,7 +4,7 @@
       <h2>ISET-Events</h2>
     </div>
     <div class="navbar-menu">
-      <span class="user-info">{{ currentUser?.name }} ({{ currentUser?.role === 'organisateur' ? 'Organisateur' : 'Participant' }})</span>
+      <span class="user-info">{{ currentUser?.name }} ({{ currentUser?.role === 'organisateur' ? 'Organisateur' : currentUser?.role === 'admin' ? 'Admin' : 'Participant' }})</span>
       <button class="btn-logout" (click)="logout()">Déconnexion</button>
     </div>
   </nav>
@@ -56,6 +56,20 @@
             <p><strong>Date:</strong> {{ event.date }}</p>
             <p><strong>Lieu:</strong> {{ event.location }}</p>
             <p><strong>Participants:</strong> {{ event.attendees }} / {{ event.capacity }}</p>
+            <p><strong>Statut:</strong> 
+              <span [ngClass]="{
+                'status-pending': event.approvalStatus === 'pending',
+                'status-approved': event.approvalStatus === 'approved',
+                'status-rejected': event.approvalStatus === 'rejected'
+              }">
+                {{ event.approvalStatus === 'pending' ? '⏰ En attente d\'approbation' : 
+                   event.approvalStatus === 'approved' ? '✅ Approuvé' : 
+                   '❌ Rejeté' }}
+              </span>
+            </p>
+            <p *ngIf="event.approvalStatus === 'rejected' && event.rejectionReason">
+              <strong>Raison du rejet:</strong> {{ event.rejectionReason }}
+            </p>
           </div>
           <div class="event-actions">
             <button class="btn-view" (click)="viewAttendees(event)">Voir participants</button>
@@ -74,6 +88,9 @@
         </button>
         <button [class.active]="activeTab === 'my-events'" (click)="activeTab = 'my-events'">
           ✅ Mes événements
+        </button>
+        <button [class.active]="activeTab === 'favorites'" (click)="activeTab = 'favorites'">
+          ❤️ Mes favoris
         </button>
       </div>
 
@@ -102,6 +119,12 @@
                 {{ event.attendees >= event.capacity ? 'Complet' : 'S\'inscrire' }}
               </button>
               <span *ngIf="isRegistered(event.id)" class="registered-badge">Déjà inscrit</span>
+              <button 
+                class="btn-favorite" 
+                (click)="toggleFavorite(event)"
+                [class.favorited]="isFavorite(event.id)">
+                {{ isFavorite(event.id) ? '❤️' : '🤍' }}
+              </button>
             </div>
           </div>
         </div>
@@ -129,6 +152,45 @@
                 (click)="cancelEvent(event.id)"
                 *ngIf="event.status === 'upcoming'">
                 Annuler l'inscription
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mes favoris -->
+      <div *ngIf="activeTab === 'favorites'" class="events-section">
+        <div *ngIf="favoriteEvents.length === 0" class="empty-favorites">
+          <p>🤍 Vous n'avez pas encore d'événements favoris</p>
+          <p>Explorez les événements disponibles et ajoutez-les à vos favoris !</p>
+        </div>
+        <div *ngIf="favoriteEvents.length > 0" class="events-grid">
+          <div *ngFor="let event of favoriteEvents" class="event-card">
+            <div class="event-header">
+              <h4>{{ event.title }}</h4>
+              <span [ngClass]="{'status-upcoming': event.status === 'upcoming', 'status-ongoing': event.status === 'ongoing', 'status-completed': event.status === 'completed'}">
+                {{ event.status === 'upcoming' ? 'À venir' : event.status === 'ongoing' ? 'En cours' : 'Terminé' }}
+              </span>
+            </div>
+            <div class="event-details">
+              <p><strong>Organisateur:</strong> {{ event.organisateurName }}</p>
+              <p><strong>Date:</strong> {{ event.date }}</p>
+              <p><strong>Lieu:</strong> {{ event.location }}</p>
+              <p><strong>Participants:</strong> {{ event.attendees }} / {{ event.capacity }}</p>
+            </div>
+            <div class="event-actions">
+              <button 
+                *ngIf="!isRegistered(event.id)" 
+                class="btn-join" 
+                (click)="joinEvent(event)"
+                [disabled]="event.attendees >= event.capacity">
+                {{ event.attendees >= event.capacity ? 'Complet' : 'S\'inscrire' }}
+              </button>
+              <span *ngIf="isRegistered(event.id)" class="registered-badge">Déjà inscrit</span>
+              <button 
+                class="btn-favorite favorited" 
+                (click)="toggleFavorite(event)">
+                ❤️
               </button>
             </div>
           </div>

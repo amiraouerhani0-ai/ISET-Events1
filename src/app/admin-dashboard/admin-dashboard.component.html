@@ -43,6 +43,28 @@
       </div>
     </div>
 
+    <!-- Notifications des événements en attente -->
+    <div *ngIf="pendingEvents.length > 0" class="notifications-section">
+      <div class="notification-header">
+        <h3>⏰ Événements en attente d'approbation ({{ pendingEvents.length }})</h3>
+      </div>
+      <div class="pending-events-list">
+        <div *ngFor="let event of pendingEvents" class="pending-event-card">
+          <div class="event-info">
+            <h4>{{ event.title }}</h4>
+            <p><strong>Organisateur:</strong> {{ event.organisateurName }}</p>
+            <p><strong>Date:</strong> {{ event.date }}</p>
+            <p><strong>Lieu:</strong> {{ event.location }}</p>
+            <p><strong>Capacité:</strong> {{ event.capacity }} personnes</p>
+          </div>
+          <div class="event-actions">
+            <button class="btn-approve" (click)="openApprovalModal(event)">✅ Approuver</button>
+            <button class="btn-reject" (click)="openApprovalModal(event)">❌ Rejeter</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Onglets -->
     <div class="tabs">
       <button 
@@ -66,11 +88,16 @@
     <div *ngIf="activeTab === 'users'" class="users-section">
       <div class="section-header">
         <h3>Gestion des Utilisateurs</h3>
-        <input 
-          type="text" 
-          class="search-input" 
-          placeholder="🔍 Rechercher un utilisateur..."
-          [(ngModel)]="searchUser">
+        <div class="header-actions">
+          <input 
+            type="text" 
+            class="search-input" 
+            placeholder="🔍 Rechercher un utilisateur..."
+            [(ngModel)]="searchUser">
+          <button class="btn-create-user" (click)="showCreateUserModal = true">
+            ➕ Ajouter un utilisateur
+          </button>
+        </div>
       </div>
       
       <div class="table-container">
@@ -93,14 +120,19 @@
               <td>{{ user.email }}</td>
               <td>{{ user.phone }}</td>
               <td>
-                <span [ngClass]="{'role-badge-organisateur': user.role === 'organisateur', 'role-badge-participant': user.role === 'participant'}">
-                  {{ user.role === 'organisateur' ? 'Organisateur' : 'Participant' }}
+                <span [ngClass]="{'role-badge-admin': user.role === 'admin', 'role-badge-organisateur': user.role === 'organisateur', 'role-badge-participant': user.role === 'participant'}">
+                  {{ user.role === 'admin' ? 'Admin' : user.role === 'organisateur' ? 'Organisateur' : 'Participant' }}
                 </span>
               </td>
               <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
               <td class="actions">
-                <button class="btn-edit" (click)="editUser(user)">✏️</button>
-                <button class="btn-delete" (click)="deleteUser(user.id)">🗑️</button>
+                <span *ngIf="user.id === currentUser.id" class="current-admin" title="Votre compte admin est protégé">
+                  👑 Admin Protégé
+                </span>
+                <ng-container *ngIf="user.id !== currentUser.id">
+                  <button class="btn-edit" (click)="editUser(user)" title="Modifier">✏️</button>
+                  <button class="btn-delete" (click)="deleteUser(user.id)" title="Supprimer">🗑️</button>
+                </ng-container>
               </td>
             </tr>
           </tbody>
@@ -236,14 +268,58 @@
       </div>
       <div class="form-group">
         <label>Rôle</label>
+        <select formControlName="role" class="form-control" [disabled]="selectedUser?.id === currentUser.id || selectedUser?.role === 'admin'">
+          <option value="admin" *ngIf="selectedUser?.role === 'admin'" selected>Admin</option>
+          <option value="organisateur">Organisateur</option>
+          <option value="participant">Participant</option>
+        </select>
+        <small *ngIf="selectedUser?.id === currentUser.id || selectedUser?.role === 'admin'" class="form-text text-muted">
+          🔒 Le rôle admin ne peut pas être modifié
+        </small>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="showEditUserModal = false">Annuler</button>
+        <button type="submit" class="btn-save">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Créer Utilisateur -->
+<div *ngIf="showCreateUserModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Ajouter un utilisateur</h3>
+      <button class="modal-close" (click)="showCreateUserModal = false">&times;</button>
+    </div>
+    <form [formGroup]="createUserForm" (ngSubmit)="createUser()">
+      <div class="form-group">
+        <label>Nom complet</label>
+        <input type="text" formControlName="name" class="form-control" placeholder="Entrez le nom complet">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" class="form-control" placeholder="exemple@email.com">
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" formControlName="password" class="form-control" placeholder="Minimum 6 caractères">
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="tel" formControlName="phone" class="form-control" placeholder="Numéro de téléphone">
+      </div>
+      <div class="form-group">
+        <label>Rôle</label>
         <select formControlName="role" class="form-control">
+          <option value="">Sélectionner un rôle</option>
           <option value="organisateur">Organisateur</option>
           <option value="participant">Participant</option>
         </select>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn-cancel" (click)="showEditUserModal = false">Annuler</button>
-        <button type="submit" class="btn-save">Enregistrer</button>
+        <button type="button" class="btn-cancel" (click)="showCreateUserModal = false">Annuler</button>
+        <button type="submit" class="btn-save" [disabled]="createUserForm.invalid">Créer</button>
       </div>
     </form>
   </div>
@@ -281,6 +357,45 @@
           <li *ngFor="let attendee of eventAttendees">{{ attendee.userName }}</li>
           <li *ngIf="eventAttendees.length === 0">Aucun participant pour le moment</li>
         </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal d'approbation/rejet des événements -->
+<div *ngIf="showApprovalModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Gestion de l'événement</h3>
+      <button class="modal-close" (click)="closeApprovalModal()">&times;</button>
+    </div>
+    <div *ngIf="selectedEventForApproval" class="approval-content">
+      <div class="event-summary">
+        <h4>{{ selectedEventForApproval.title }}</h4>
+        <p><strong>Organisateur:</strong> {{ selectedEventForApproval.organisateurName }}</p>
+        <p><strong>Date:</strong> {{ selectedEventForApproval.date }}</p>
+        <p><strong>Lieu:</strong> {{ selectedEventForApproval.location }}</p>
+        <p><strong>Capacité:</strong> {{ selectedEventForApproval.capacity }} personnes</p>
+        <p><strong>Description:</strong> {{ selectedEventForApproval.description }}</p>
+      </div>
+      
+      <div class="approval-actions">
+        <div class="action-section">
+          <h4>✅ Approuver l'événement</h4>
+          <p>Cet événement sera visible par tous les participants.</p>
+          <button class="btn-approve-full" (click)="approveEvent()">Approuver</button>
+        </div>
+        
+        <div class="action-section">
+          <h4>❌ Rejeter l'événement</h4>
+          <p>Veuillez fournir une raison pour le rejet:</p>
+          <textarea 
+            [(ngModel)]="rejectionReason" 
+            class="rejection-reason" 
+            placeholder="Expliquez pourquoi cet événement est rejeté..."
+            rows="4"></textarea>
+          <button class="btn-reject-full" (click)="rejectEvent()">Rejeter</button>
+        </div>
       </div>
     </div>
   </div>
